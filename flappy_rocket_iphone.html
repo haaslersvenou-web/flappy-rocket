@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flappy Rocket</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; background:#70c5ce; touch-action: manipulation; }
+    canvas { display:block; }
+  </style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+(function(){
+  // ==================== CONFIGURATION ====================
+  const GROUND_HEIGHT = 50;
+  const BIRD_RADIUS = 20;
+  const BIRD_X_RATIO = 0.25;
+  const PIPE_WIDTH = 80;
+  const COIN_RADIUS = 12;
+  const POWERUP_RADIUS = 15;
+  const MAX_PARTICLES = 100;
+  const MAX_EVENT_PARTICLES = 40;
+
+  // ==================== LANGUE ====================
+  let lang = 'fr'; // 'fr' ou 'en'
+
+  function detectLanguage() {
+    const userLang = navigator.language || navigator.userLanguage || 'fr';
+    return userLang.startsWith('fr') ? 'fr' : 'en';
+  }
+
+  // ==================== TRADUCTIONS ====================
+  const translations = {
+    fr: {
+      title: 'Flappy Rocket',
+      play: 'Jouer',
+      shop: 'Boutique',
+      themes: 'Thèmes',
+      events: 'Événements',
+      missions: 'Missions',
+      achievements: 'Succès',
+      settings: 'Paramètres',
+      coins: '🪙 ',
+      record: 'Record : ',
+      dailyChallenge: 'Défi du jour : score ',
+      activeEvent: 'Événement actif : ',
+      newDayReward: 'Connexion quotidienne ! +',
+      newDayStreak: ' (série: ',
+      newDayEnd: ')',
+      eventActivated: 'Événement activé !',
+      dailyChallengeCompleted: 'Défi du jour réussi ! (+',
+      dailyChallengeEnd: '🪙)',
+      achievementUnlocked: 'Succès : ',
+      achievementReward: ' (+',
+      achievementEnd: '🪙)',
+      storageUnavailable: 'Stockage local indisponible - données non persistantes',
+      adminMode: 'MODE ADMIN ACTIF',
+      back: 'Retour',
+      unlocked: 'Débloqué',
+      price: 'Prix : ',
+      free: 'GRATUIT',
+      eventCost: 'Coût : ',
+      activeEventRemaining: 'Actif (reste ',
+      hours: 'h)',
+      clickToActivate: 'Cliquez pour activer',
+      missionClaim: 'Réclamer +',
+      missionClaimEnd: ' 🪙',
+      missionDone: 'Terminé',
+      missionInProgress: 'En cours',
+      resetMissions: 'Réinitialiser missions',
+      sound: 'Son : ',
+      vibration: 'Vibration : ',
+      on: 'ON',
+      off: 'OFF',
+      toggle: 'Activer/Désactiver',
+      resetData: 'Réinitialiser données',
+      language: 'Langue : ',
+      pause: 'Pause',
+      resume: 'Reprendre',
+      menu: 'Menu',
+      gameOver: 'Game Over',
+      score: 'Score : ',
+      pipesPassed: 'Tuyaux passés : ',
+      touchToStart: 'Touchez pour commencer',
+      touchToReplay: 'Touchez pour rejouer',
+      replay: 'Rejouer',
+      level: 'Niveau : ',
+      combo: 'Combo x',
+      // Écrans de menus
+      shopTitle: 'Boutique des Skins',
+      themesTitle: 'Thèmes',
+      eventsTitle: 'Événements',
+      missionsTitle: 'Missions',
+      achievementsTitle: 'Succès',
+      settingsTitle: 'Paramètres',
+      eventSkinsSuffix: ' (Event)',
+      // Noms de skins, thèmes, événements
+      skin_classic: 'Rouge Classique',
+      skin_blue: 'Bleu Azur',
+      skin_green: 'Vert Nature',
+      skin_gold: 'Or Royal',
+      skin_purple: 'Violet Nébuleuse',
+      skin_black: 'Noir Furtif',
+      skin_candy_rocket: 'Candy Rocket',
+      skin_lollipop: 'Sucette Volante',
+      skin_choco_rocket: 'Choco Rocket',
+      skin_fondue: 'Fondue Express',
+      skin_sapin: 'Sapin Rocket',
+      skin_santa: 'Père Noël Express',
+      skin_pumpkin: 'Citrouille Rocket',
+      skin_ghost: 'Fantôme Volant',
+      skin_rabbit: 'Lapin Rocket',
+      skin_egg: 'Œuf Surprise',
+      skin_firework: 'Feu d\'Artifice Rocket',
+      skin_countdown: 'Compte à Rebours',
+      skin_cupidon: 'Cupidon Rocket',
+      skin_love: 'Love Rocket',
+      theme_day: 'Jour',
+      theme_sunset: 'Coucher de soleil',
+      theme_night: 'Nuit',
+      event_candy: 'Candy',
+      event_candy_desc: 'Plongez dans un monde sucré !',
+      event_chocolate: 'Chocolat',
+      event_chocolate_desc: 'Un délice cacaoté !',
+      event_christmas: 'Noël',
+      event_christmas_desc: 'Magie de Noël !',
+      event_halloween: 'Halloween',
+      event_halloween_desc: 'Frissons et bonbons !',
+      event_easter: 'Pâques',
+      event_easter_desc: 'Joyeuses Pâques !',
+      event_newyear: 'Nouvel An',
+      event_newyear_desc: 'Bonne année !',
+      event_valentine: 'Saint-Valentin',
+      event_valentine_desc: 'L\'amour dans l\'air !',
+    },
+    en: {
+      title: 'Flappy Rocket',
+      play: 'Play',
+      shop: 'Shop',
+      themes: 'Themes',
+      events: 'Events',
+      missions: 'Missions',
+      achievements: 'Achievements',
+      settings: 'Settings',
+      coins: '🪙 ',
+      record: 'Record: ',
+      dailyChallenge: 'Daily challenge: score ',
+      activeEvent: 'Active event: ',
+      newDayReward: 'Daily login! +',
+      newDayStreak: ' (streak: ',
+      newDayEnd: ')',
+      eventActivated: 'Event activated!',
+      dailyChallengeCompleted: 'Daily challenge completed! (+',
+      dailyChallengeEnd: '🪙)',
+      achievementUnlocked: 'Achievement: ',
+      achievementReward: ' (+',
+      achievementEnd: '🪙)',
+      storageUnavailable: 'Local storage unavailable - data not persistent',
+      adminMode: 'ADMIN MODE ACTIVE',
+      back: 'Back',
+      unlocked: 'Unlocked',
+      price: 'Price: ',
+      free: 'FREE',
+      eventCost: 'Cost: ',
+      activeEventRemaining: 'Active (',
+      hours: 'h left)',
+      clickToActivate: 'Click to activate',
+      missionClaim: 'Claim +',
+      missionClaimEnd: ' 🪙',
+      missionDone: 'Done',
+      missionInProgress: 'In progress',
+      resetMissions: 'Reset missions',
+      sound: 'Sound: ',
+      vibration: 'Vibration: ',
+      on: 'ON',
+      off: 'OFF',
+      toggle: 'Toggle',
+      resetData: 'Reset data',
+      language: 'Language: ',
+      pause: 'Pause',
+      resume: 'Resume',
+      menu: 'Menu',
+      gameOver: 'Game Over',
+      score: 'Score: ',
+      pipesPassed: 'Pipes passed: ',
+      touchToStart: 'Touch to start',
+      touchToReplay: 'Touch to replay',
+      replay: 'Replay',
+      level: 'Level: ',
+      combo: 'Combo x',
+      shopTitle: 'Skin Shop',
+      themesTitle: 'Themes',
+      eventsTitle: 'Events',
+      missionsTitle: 'Missions',
+      achievementsTitle: 'Achievements',
+      settingsTitle: 'Settings',
+      eventSkinsSuffix: ' (Event)',
+      skin_classic: 'Classic Red',
+      skin_blue: 'Azure Blue',
+      skin_green: 'Nature Green',
+      skin_gold: 'Royal Gold',
+      skin_purple: 'Nebula Purple',
+      skin_black: 'Stealth Black',
+      skin_candy_rocket: 'Candy Rocket',
+      skin_lollipop: 'Flying Lollipop',
+      skin_choco_rocket: 'Choco Rocket',
+      skin_fondue: 'Fondue Express',
+      skin_sapin: 'Fir Tree Rocket',
+      skin_santa: 'Santa Express',
+      skin_pumpkin: 'Pumpkin Rocket',
+      skin_ghost: 'Flying Ghost',
+      skin_rabbit: 'Rabbit Rocket',
+      skin_egg: 'Surprise Egg',
+      skin_firework: 'Firework Rocket',
+      skin_countdown: 'Countdown',
+      skin_cupidon: 'Cupid Rocket',
+      skin_love: 'Love Rocket',
+      theme_day: 'Day',
+      theme_sunset: 'Sunset',
+      theme_night: 'Night',
+      event_candy: 'Candy',
+      event_candy_desc: 'Dive into a sweet world!',
+      event_chocolate: 'Chocolate',
+      event_chocolate_desc: 'A cocoa delight!',
+      event_christmas: 'Christmas',
+      event_christmas_desc: 'Christmas magic!',
+      event_halloween: 'Halloween',
+      event_halloween_desc: 'Thrills and candies!',
+      event_easter: 'Easter',
+      event_easter_desc: 'Happy Easter!',
+      event_newyear: 'New Year',
+      event_newyear_desc: 'Happy New Year!',
+      event_valentine: 'Valentine\'s Day',
+      event_valentine_desc: 'Love is in the air!',
+    }
+  };
+
+  function t(key) {
+    return translations[lang][key] || translations.fr[key] || key;
+  }
+
+  // ==================== SCROLL MANAGEMENT ====================
+  let scrollOffset = 0;
+  let isScrolling = false;
+  let scrollStartY = 0;
+  let lastTouchY = 0;
+  let currentScrollableScreen = 'menu';
+
+  const SCROLLABLE_SCREENS = ['menu', 'shop', 'themes', 'events'];
+
+  function getMaxScrollOffset(screen) {
+    switch(screen) {
+      case 'menu':
+        return Math.max(0, 7 * 70 + 120 - (H - 100));
+      case 'shop':
+        return Math.max(0, (SKINS.length + (getEventSkinsForActiveEvent().length || 0)) * 70 + 180 - (H - 100));
+      case 'themes':
+        return Math.max(0, Object.keys(THEMES).length * 70 + 180 - (H - 100));
+      case 'events':
+        return Math.max(0, EVENTS.length * 90 + 180 - (H - 100));
+      default:
+        return 0;
+    }
+  }
+
+  function clampScroll() {
+    const max = getMaxScrollOffset(currentScrollableScreen);
+    if (scrollOffset < 0) scrollOffset = 0;
+    if (scrollOffset > max) scrollOffset = max;
+  }
+
+  // ==================== OPTIMISATIONS ====================
+  let skyGradient = null;
+  let groundGradient = null;
+  let pipeGradient = null;
+  let pipeGradientDark = null;
+  let cloudTexture = null;
+  let previousTheme = null;
+
+  function createPrecomputedGradients() {
+    const theme = getCurrentTheme();
+    skyGradient = ctx.createLinearGradient(0, 0, 0, H);
+    skyGradient.addColorStop(0, theme.skyTop);
+    skyGradient.addColorStop(1, theme.skyBottom);
+    groundGradient = ctx.createLinearGradient(0, H - GROUND_HEIGHT, 0, H);
+    groundGradient.addColorStop(0, theme.groundTop);
+    groundGradient.addColorStop(1, theme.groundBottom);
+    pipeGradient = ctx.createLinearGradient(0, 0, PIPE_WIDTH, 0);
+    pipeGradient.addColorStop(0, theme.pipeLight);
+    pipeGradient.addColorStop(0.5, theme.pipeMid);
+    pipeGradient.addColorStop(1, theme.pipeDark);
+    pipeGradientDark = ctx.createLinearGradient(0, 0, PIPE_WIDTH, 0);
+    pipeGradientDark.addColorStop(0, theme.pipeMid);
+    pipeGradientDark.addColorStop(1, theme.pipeDark);
+    cloudTexture = document.createElement('canvas');
+    cloudTexture.width = 300;
+    cloudTexture.height = 100;
+    const cctx = cloudTexture.getContext('2d');
+    cctx.fillStyle = 'rgba(255,255,255,0.7)';
+    cctx.beginPath();
+    cctx.arc(40, 50, 30, 0, Math.PI*2);
+    cctx.arc(80, 30, 40, 0, Math.PI*2);
+    cctx.arc(130, 50, 35, 0, Math.PI*2);
+    cctx.arc(80, 70, 25, 0, Math.PI*2);
+    cctx.fill();
+  }
+
+  function updatePrecomputedGradientsIfNeeded() {
+    if (!skyGradient || gameData.selectedTheme !== previousTheme || isEventActive()) {
+      createPrecomputedGradients();
+      previousTheme = gameData.selectedTheme;
+    }
+  }
+
+  // ==================== CANVAS ====================
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  let W, H, dpr;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    createPrecomputedGradients();
+    previousTheme = gameData.selectedTheme;
+    clampScroll();
+  }
+  window.addEventListener('resize', resize);
+
+  // ==================== AUDIO ====================
+  let audioCtx = null;
+  let soundEnabled = true;
+  let vibrationEnabled = true;
+  let musicInterval = null;
+
+  function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  function playTone(freq, duration, type = 'square', volume = 0.15) {
+    if (!audioCtx || !soundEnabled) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+
+  function vibrate(pattern) {
+    if (vibrationEnabled && navigator.vibrate) navigator.vibrate(pattern);
+  }
+
+  function soundJump() { playTone(380,0.08,'square',0.2); setTimeout(()=>playTone(600,0.08,'square',0.15),40); }
+  function soundCoin() { playTone(900,0.1,'sine',0.25); setTimeout(()=>playTone(1200,0.1,'sine',0.2),80); }
+  function soundPowerUp() { playTone(500,0.12,'sawtooth',0.2); setTimeout(()=>playTone(700,0.12,'sawtooth',0.2),120); setTimeout(()=>playTone(900,0.12,'sawtooth',0.2),240); }
+  function soundShieldActivate() { playTone(400,0.2,'sine',0.3); setTimeout(()=>playTone(600,0.2,'sine',0.3),150); }
+  function soundExplosion() { playTone(200,0.3,'sawtooth',0.25); setTimeout(()=>playTone(150,0.3,'sawtooth',0.25),150); setTimeout(()=>playTone(100,0.4,'sawtooth',0.25),300); }
+  function soundGameOver() { playTone(300,0.15,'square',0.2); setTimeout(()=>playTone(250,0.2,'square',0.2),150); setTimeout(()=>playTone(200,0.3,'square',0.2),350); setTimeout(()=>playTone(150,0.4,'square',0.2),600); }
+  function soundButtonClick() { playTone(800,0.05,'sine',0.1); }
+  function soundLaser() { playTone(1000,0.2,'sawtooth',0.2); setTimeout(()=>playTone(500,0.2,'sawtooth',0.2),100); }
+  function soundDaily() { playTone(1000,0.1,'sine',0.2); setTimeout(()=>playTone(1200,0.1,'sine',0.2),100); setTimeout(()=>playTone(1400,0.1,'sine',0.2),200); }
+
+  function getThemeMusicNotes(theme) {
+    if (theme.eventMusic) return theme.eventMusic;
+    switch(theme.name) {
+      case 'day': return [523,587,659,784,659,587,523,440,523,659,784,880,784,659,587,523];
+      case 'sunset': return [392,440,523,659,523,440,392,330,392,523,659,784,659,523,440,392];
+      case 'night': return [262,294,330,392,330,294,262,220,262,330,392,523,392,330,294,262];
+      default: return [523,587,659,784];
+    }
+  }
+
+  function startBackgroundMusic() {
+    if (musicInterval || !soundEnabled) return;
+    const notes = getThemeMusicNotes(getCurrentTheme());
+    let index = 0;
+    musicInterval = setInterval(() => {
+      playTone(notes[index % notes.length], 0.3, 'triangle', 0.05);
+      index++;
+    }, 350);
+  }
+  function stopBackgroundMusic() {
+    if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
+  }
+
+  // ==================== DONNÉES PERSISTANTES ====================
+  let storageAvailable = false;
+  let memoryStorage = {};
+
+  function isLocalStorageAvailable() {
+    try {
+      const testKey = '__test__';
+      localStorage.setItem(testKey, 'test');
+      localStorage.removeItem(testKey);
+      return true;
+    } catch(e) {
+      return false;
+    }
+  }
+  storageAvailable = isLocalStorageAvailable();
+
+  let gameData = {
+    coins: 0,
+    bestScore: 0,
+    totalGames: 0,
+    totalPipesPassed: 0,
+    totalCoinsCollected: 0,
+    skinsUnlocked: [0],
+    selectedSkin: 0,
+    themesUnlocked: ['day'],
+    selectedTheme: 'day',
+    missions: [],
+    achievements: {},
+    dailyChallengeDate: null,
+    dailyChallengeScore: 0,
+    dailyChallengeCompleted: false,
+    activeEvent: null,
+    purchasedEventSkins: [],
+    lastLoginDate: null,
+    loginStreak: 0
+  };
+
+  function loadGameData() {
+    try {
+      if (storageAvailable) {
+        const data = localStorage.getItem('flappy_rocket_data');
+        if (data) gameData = JSON.parse(data);
+      } else if (memoryStorage.flappy_rocket_data) {
+        gameData = JSON.parse(memoryStorage.flappy_rocket_data);
+      }
+    } catch(e) {
+      console.warn('Erreur lors du chargement des données:', e);
+    }
+    if (!gameData.missions || gameData.missions.length === 0) resetMissions();
+    if (!gameData.achievements) gameData.achievements = {};
+    if (!gameData.skinsUnlocked) gameData.skinsUnlocked = [0];
+    if (!gameData.themesUnlocked) gameData.themesUnlocked = ['day'];
+    if (!gameData.dailyChallengeDate) gameData.dailyChallengeDate = null;
+    if (!gameData.activeEvent) gameData.activeEvent = null;
+    if (!gameData.purchasedEventSkins) gameData.purchasedEventSkins = [];
+    if (!gameData.lastLoginDate) gameData.lastLoginDate = null;
+    if (typeof gameData.loginStreak !== 'number') gameData.loginStreak = 0;
+    rebuildSkins();
+    checkDailyLogin();
+  }
+
+  function saveGameData() {
+    try {
+      const dataStr = JSON.stringify(gameData);
+      if (storageAvailable) {
+        localStorage.setItem('flappy_rocket_data', dataStr);
+      } else {
+        memoryStorage.flappy_rocket_data = dataStr;
+        console.warn('localStorage indisponible. Les données ne seront pas conservées après fermeture.');
+      }
+    } catch(e) {
+      console.error('Erreur lors de la sauvegarde:', e);
+    }
+  }
+
+  function checkDailyLogin() {
+    const today = new Date().toISOString().split('T')[0];
+    if (gameData.lastLoginDate !== today) {
+      gameData.lastLoginDate = today;
+      gameData.loginStreak = (gameData.loginStreak || 0) + 1;
+      const reward = 20 + gameData.loginStreak * 5;
+      gameData.coins += reward;
+      saveGameData();
+      showAchievementNotification({ text:`${t('newDayReward')}${reward} 🪙${t('newDayStreak')}${gameData.loginStreak}${t('newDayEnd')}`, timer:3 });
+      soundDaily();
+    }
+  }
+
+  // ==================== SKINS & THÈMES ====================
+  const BASE_SKINS = [
+    { name: 'Rouge Classique', name_en: 'Classic Red', color: '#e74c3c', trailColor: '#ff6b6b', price: 0, eventId: null },
+    { name: 'Bleu Azur', name_en: 'Azure Blue', color: '#3498db', trailColor: '#74b9ff', price: 100, eventId: null },
+    { name: 'Vert Nature', name_en: 'Nature Green', color: '#2ecc71', trailColor: '#55efc4', price: 150, eventId: null },
+    { name: 'Or Royal', name_en: 'Royal Gold', color: '#f1c40f', trailColor: '#ffe66d', price: 300, eventId: null },
+    { name: 'Violet Nébuleuse', name_en: 'Nebula Purple', color: '#9b59b6', trailColor: '#c39bd3', price: 500, eventId: null },
+    { name: 'Noir Furtif', name_en: 'Stealth Black', color: '#2c3e50', trailColor: '#95a5a6', price: 800, eventId: null }
+  ];
+
+  let SKINS = [...BASE_SKINS];
+
+  function rebuildSkins() {
+    SKINS = [...BASE_SKINS];
+    for (const skin of gameData.purchasedEventSkins) {
+      if (!SKINS.some(s => s.name === skin.name)) {
+        SKINS.push(skin);
+      }
+    }
+    const unlockedIndices = new Set();
+    unlockedIndices.add(0);
+    for (let i = 0; i < SKINS.length; i++) {
+      if (i < BASE_SKINS.length && gameData.skinsUnlocked.includes(i)) {
+        unlockedIndices.add(i);
+      }
+    }
+    for (let i = BASE_SKINS.length; i < SKINS.length; i++) {
+      unlockedIndices.add(i);
+    }
+    gameData.skinsUnlocked = Array.from(unlockedIndices).sort((a,b)=>a-b);
+    if (!unlockedIndices.has(gameData.selectedSkin)) {
+      gameData.selectedSkin = 0;
+    }
+  }
+
+  function isSkinUnlocked(index) { return gameData.skinsUnlocked.includes(index); }
+  function unlockSkin(index) { if (!isSkinUnlocked(index)) gameData.skinsUnlocked.push(index); }
+  function getSelectedSkin() { return SKINS[gameData.selectedSkin]; }
+  function getSkinName(skin) { return lang === 'fr' ? skin.name : skin.name_en; }
+
+  const THEMES = {
+    day: { name:'Jour', name_en:'Day', skyTop:'#a0d8ef', skyBottom:'#70c5ce', groundTop:'#ded895', groundBottom:'#b0a86e', hillColor:'#8bc34a', pipeLight:'#4caf50', pipeDark:'#1b5e20', pipeMid:'#2e7d32', price:0 },
+    sunset: { name:'Coucher de soleil', name_en:'Sunset', skyTop:'#ff9a9e', skyBottom:'#fecfef', groundTop:'#e0a370', groundBottom:'#c07040', hillColor:'#d4a373', pipeLight:'#e67e22', pipeDark:'#a04000', pipeMid:'#d35400', price:200 },
+    night: { name:'Nuit', name_en:'Night', skyTop:'#0f2027', skyBottom:'#2c5364', groundTop:'#4a4a4a', groundBottom:'#2e2e2e', hillColor:'#3a3a3a', pipeLight:'#5d6d7e', pipeDark:'#1c2833', pipeMid:'#34495e', price:400 }
+  };
+
+  function isThemeUnlocked(themeId) { return gameData.themesUnlocked.includes(themeId); }
+  function unlockTheme(themeId) { if (!isThemeUnlocked(themeId)) gameData.themesUnlocked.push(themeId); }
+  function getCurrentTheme() {
+    const activeEvent = getActiveEvent();
+    if (activeEvent) return activeEvent.theme;
+    return THEMES[gameData.selectedTheme];
+  }
+  function getThemeName(theme) { return lang === 'fr' ? theme.name : theme.name_en; }
+
+  // ==================== ÉVÉNEMENTS ====================
+  const EVENTS = [
+    { id:'candy', name:'Candy', name_en:'Candy', description:'Plongez dans un monde sucré !', description_en:'Dive into a sweet world!', cost:200, durationHours:24,
+      theme:{ name:'Candy', name_en:'Candy', skyTop:'#ffb6c1', skyBottom:'#ff69b4', groundTop:'#ffe4e1', groundBottom:'#ffc0cb', hillColor:'#ff1493', pipeLight:'#ff69b4', pipeDark:'#c71585', pipeMid:'#db7093', eventMusic:[660,830,990,1320,990,830,660,520,660,990,1320,1560] },
+      skins:[ { name:'Candy Rocket', name_en:'Candy Rocket', color:'#ff69b4', trailColor:'#ffb6c1', price:150, eventId:'candy' }, { name:'Sucette Volante', name_en:'Flying Lollipop', color:'#ff1493', trailColor:'#ffc0cb', price:250, eventId:'candy' } ],
+      particleType:'candy' },
+    { id:'chocolate', name:'Chocolat', name_en:'Chocolate', description:'Un délice cacaoté !', description_en:'A cocoa delight!', cost:250, durationHours:24,
+      theme:{ name:'Chocolat', name_en:'Chocolate', skyTop:'#8b4513', skyBottom:'#d2691e', groundTop:'#a0522d', groundBottom:'#6b3e1b', hillColor:'#5c3317', pipeLight:'#cd853f', pipeDark:'#3e1f0a', pipeMid:'#8b4513', eventMusic:[392,440,523,659,523,440,392,330,392,523,659,784] },
+      skins:[ { name:'Choco Rocket', name_en:'Choco Rocket', color:'#5c3317', trailColor:'#8b4513', price:180, eventId:'chocolate' }, { name:'Fondue Express', name_en:'Fondue Express', color:'#3e1f0a', trailColor:'#cd853f', price:300, eventId:'chocolate' } ],
+      particleType:'chocolate' },
+    { id:'christmas', name:'Noël', name_en:'Christmas', description:'Magie de Noël !', description_en:'Christmas magic!', cost:300, durationHours:48,
+      theme:{ name:'Noël', name_en:'Christmas', skyTop:'#0f2027', skyBottom:'#2c5364', groundTop:'#ffffff', groundBottom:'#d3d3d3', hillColor:'#f0f0f0', pipeLight:'#e74c3c', pipeDark:'#8b0000', pipeMid:'#c0392b', eventMusic:[261,311,349,415,349,311,261,233,261,311,349,415] },
+      skins:[ { name:'Sapin Rocket', name_en:'Fir Tree Rocket', color:'#2e8b57', trailColor:'#a9cce3', price:200, eventId:'christmas' }, { name:'Père Noël Express', name_en:'Santa Express', color:'#c0392b', trailColor:'#ffffff', price:300, eventId:'christmas' } ],
+      particleType:'snow' },
+    { id:'halloween', name:'Halloween', name_en:'Halloween', description:'Frissons et bonbons !', description_en:'Thrills and candies!', cost:280, durationHours:24,
+      theme:{ name:'Halloween', name_en:'Halloween', skyTop:'#2c3e50', skyBottom:'#e67e22', groundTop:'#3e2723', groundBottom:'#1b0000', hillColor:'#4a148c', pipeLight:'#e67e22', pipeDark:'#bf360c', pipeMid:'#f39c12', eventMusic:[330,392,494,392,330,294,262,294] },
+      skins:[ { name:'Citrouille Rocket', name_en:'Pumpkin Rocket', color:'#e67e22', trailColor:'#ffb300', price:220, eventId:'halloween' }, { name:'Fantôme Volant', name_en:'Flying Ghost', color:'#ecf0f1', trailColor:'#bdc3c7', price:280, eventId:'halloween' } ],
+      particleType:'bat' },
+    { id:'easter', name:'Pâques', name_en:'Easter', description:'Joyeuses Pâques !', description_en:'Happy Easter!', cost:250, durationHours:24,
+      theme:{ name:'Pâques', name_en:'Easter', skyTop:'#ffe6f2', skyBottom:'#ffb6c1', groundTop:'#90ee90', groundBottom:'#2e8b57', hillColor:'#66bb6a', pipeLight:'#ff69b4', pipeDark:'#c71585', pipeMid:'#ff1493', eventMusic:[523,659,784,1046,784,659,523,392] },
+      skins:[ { name:'Lapin Rocket', name_en:'Rabbit Rocket', color:'#d2b48c', trailColor:'#ffb6c1', price:200, eventId:'easter' }, { name:'Œuf Surprise', name_en:'Surprise Egg', color:'#ff69b4', trailColor:'#ffff00', price:250, eventId:'easter' } ],
+      particleType:'egg' },
+    { id:'newyear', name:'Nouvel An', name_en:'New Year', description:'Bonne année !', description_en:'Happy New Year!', cost:300, durationHours:24,
+      theme:{ name:'Nouvel An', name_en:'New Year', skyTop:'#0f0c29', skyBottom:'#302b63', groundTop:'#2c3e50', groundBottom:'#1a252f', hillColor:'#34495e', pipeLight:'#f1c40f', pipeDark:'#c0392b', pipeMid:'#e67e22', eventMusic:[523,587,659,784,880,784,659,587] },
+      skins:[ { name:'Feu d\'Artifice Rocket', name_en:'Firework Rocket', color:'#f1c40f', trailColor:'#ff5733', price:250, eventId:'newyear' }, { name:'Compte à Rebours', name_en:'Countdown', color:'#e74c3c', trailColor:'#f1c40f', price:300, eventId:'newyear' } ],
+      particleType:'firework' },
+    { id:'valentine', name:'Saint-Valentin', name_en:'Valentine\'s Day', description:'L\'amour dans l\'air !', description_en:'Love is in the air!', cost:220, durationHours:24,
+      theme:{ name:'Saint-Valentin', name_en:'Valentine\'s Day', skyTop:'#ffb6c1', skyBottom:'#ff69b4', groundTop:'#ffc0cb', groundBottom:'#ff1493', hillColor:'#ff99cc', pipeLight:'#ff1493', pipeDark:'#8b008b', pipeMid:'#ff69b4', eventMusic:[440,494,523,659,523,494,440,392] },
+      skins:[ { name:'Cupidon Rocket', name_en:'Cupid Rocket', color:'#ff69b4', trailColor:'#ff1493', price:200, eventId:'valentine' }, { name:'Love Rocket', name_en:'Love Rocket', color:'#ff1493', trailColor:'#ff69b4', price:250, eventId:'valentine' } ],
+      particleType:'heart' }
+  ];
+
+  function isEventActive() { return gameData.activeEvent && Date.now() < gameData.activeEvent.endTime; }
+  function getActiveEvent() { if (!isEventActive()) return null; return EVENTS.find(e => e.id === gameData.activeEvent.id) || null; }
+  function activateEvent(eventId) {
+    const event = EVENTS.find(e => e.id === eventId);
+    if (!event) return;
+    if (gameData.coins < event.cost) return;
+    gameData.coins -= event.cost;
+    gameData.activeEvent = { id: eventId, endTime: Date.now() + event.durationHours * 3600 * 1000 };
+    saveGameData();
+    soundCoin();
+    achievementNotifications.push({ text:`${t('eventActivated')} ${t('event_' + eventId)}`, timer:3 });
+  }
+  function getEventSkinsForActiveEvent() { const e = getActiveEvent(); return e ? e.skins : []; }
+  function purchaseEventSkin(skin) {
+    if (gameData.coins < skin.price) return;
+    if (gameData.purchasedEventSkins.some(s => s.name === skin.name)) return;
+    gameData.coins -= skin.price;
+    gameData.purchasedEventSkins.push(skin);
+    rebuildSkins();
+    saveGameData();
+    soundCoin();
+    const index = SKINS.findIndex(s => s.name === skin.name);
+    if (index !== -1) { gameData.selectedSkin = index; saveGameData(); }
+  }
+  function getEventName(event) { return lang === 'fr' ? event.name : event.name_en; }
+  function getEventDescription(event) { return lang === 'fr' ? event.description : event.description_en; }
+
+  // ==================== MISSIONS & ACHIEVEMENTS ====================
+  const MISSIONS = [
+    { id:'pass10', description:'Passer 10 tuyaux en une partie', description_en:'Pass 10 pipes in one game', target:10, reward:50, type:'pipes' },
+    { id:'collect5', description:'Collecter 5 pièces en une partie', description_en:'Collect 5 coins in one game', target:5, reward:30, type:'coins' },
+    { id:'score20', description:'Atteindre un score de 20', description_en:'Reach a score of 20', target:20, reward:80, type:'score' },
+    { id:'play3', description:'Jouer 3 parties', description_en:'Play 3 games', target:3, reward:40, type:'games' }
+  ];
+  const ACHIEVEMENTS = {
+    firstGame: { name:'Premier vol', name_en:'First flight', desc:'Jouer une partie', desc_en:'Play a game', check: () => gameData.totalGames >= 1, reward:20 },
+    score50: { name:'Score 50', name_en:'Score 50', desc:'Atteindre un score de 50', desc_en:'Reach a score of 50', check: () => gameData.bestScore >= 50, reward:50 },
+    coins100: { name:'Pièces 100', name_en:'Coins 100', desc:'Collecter 100 pièces au total', desc_en:'Collect 100 coins total', check: () => gameData.totalCoinsCollected >= 100, reward:30 },
+    pipes100: { name:'100 tuyaux', name_en:'100 pipes', desc:'Passer 100 tuyaux au total', desc_en:'Pass 100 pipes total', check: () => gameData.totalPipesPassed >= 100, reward:40 },
+    buySkin: { name:'Collectionneur', name_en:'Collector', desc:'Acheter un skin', desc_en:'Buy a skin', check: () => gameData.skinsUnlocked.length > 1, reward:60 },
+    themeUnlocked: { name:'Explorateur', name_en:'Explorer', desc:'Débloquer un thème', desc_en:'Unlock a theme', check: () => gameData.themesUnlocked.length > 1, reward:60 },
+    eventBuy: { name:'Événementiel', name_en:'Eventful', desc:'Acheter un skin d\'événement', desc_en:'Buy an event skin', check: () => gameData.purchasedEventSkins.length > 0, reward:80 }
+  };
+
+  function resetMissions() {
+    gameData.missions = MISSIONS.map(m => ({ ...m, progress:0, completed:false, claimed:false }));
+    saveGameData();
+  }
+  function checkMissionProgress(type, value) {
+    let changed = false;
+    gameData.missions.forEach(mission => {
+      if (mission.type === type && !mission.completed) {
+        if (type === 'games') mission.progress += value;
+        else mission.progress = Math.max(mission.progress, value);
+        if (mission.progress >= mission.target) { mission.completed = true; changed = true; }
+      }
+    });
+    if (changed) saveGameData();
+  }
+  function claimMission(index) {
+    const mission = gameData.missions[index];
+    if (mission.completed && !mission.claimed) {
+      gameData.coins += mission.reward;
+      mission.claimed = true;
+      saveGameData();
+      soundCoin();
+    }
+  }
+  function checkAchievements() {
+    let newAchievements = [];
+    for (const key in ACHIEVEMENTS) {
+      if (!gameData.achievements[key] && ACHIEVEMENTS[key].check()) {
+        gameData.achievements[key] = true;
+        gameData.coins += ACHIEVEMENTS[key].reward;
+        newAchievements.push(ACHIEVEMENTS[key]);
+      }
+    }
+    if (newAchievements.length > 0) {
+      saveGameData();
+      showAchievementNotification(newAchievements[0]);
+    }
+  }
+  let achievementNotifications = [];
+  function showAchievementNotification(achievement) {
+    achievementNotifications.push({ text:`${t('achievementUnlocked')}${lang === 'fr' ? achievement.name : achievement.name_en}${t('achievementReward')}${achievement.reward}${t('achievementEnd')}`, timer:3 });
+  }
+
+  // ==================== DÉFI QUOTIDIEN ====================
+  function getDailyChallenge() {
+    const today = new Date().toISOString().split('T')[0];
+    if (gameData.dailyChallengeDate !== today) {
+      gameData.dailyChallengeDate = today;
+      gameData.dailyChallengeScore = Math.floor(Math.random() * 30) + 10;
+      gameData.dailyChallengeCompleted = false;
+      saveGameData();
+    }
+    return gameData.dailyChallengeScore;
+  }
+  function checkDailyChallenge() {
+    if (!gameData.dailyChallengeCompleted && gameData.dailyChallengeDate === new Date().toISOString().split('T')[0]) {
+      if (score >= gameData.dailyChallengeScore) {
+        gameData.dailyChallengeCompleted = true;
+        const reward = 150;
+        gameData.coins += reward;
+        saveGameData();
+        showAchievementNotification({ text:`${t('dailyChallengeCompleted')}${reward}${t('dailyChallengeEnd')}`, timer:3 });
+      }
+    }
+  }
+
+  // ==================== CLASSEMENT EN LIGNE SIMULÉ ====================
+  let onlineLeaderboard = [];
+  function loadOnlineLeaderboard() {
+    try {
+      if (storageAvailable) {
+        const data = localStorage.getItem('flappy_rocket_online_leaderboard');
+        if (data) onlineLeaderboard = JSON.parse(data);
+      } else if (memoryStorage.flappy_rocket_online_leaderboard) {
+        onlineLeaderboard = JSON.parse(memoryStorage.flappy_rocket_online_leaderboard);
+      }
+    } catch(e) { onlineLeaderboard = []; }
+    if (onlineLeaderboard.length === 0) {
+      onlineLeaderboard = [
+        { name:'PlayerOne', score:120 }, { name:'ProGamer', score:95 }, { name:'RocketMaster', score:80 },
+        { name:'FlyHigh', score:65 }, { name:'Noob', score:40 }, { name:'Astro', score:30 },
+        { name:'Comet', score:20 }, { name:'Star', score:10 }
+      ];
+    }
+  }
+  function saveOnlineLeaderboard() {
+    try {
+      const dataStr = JSON.stringify(onlineLeaderboard);
+      if (storageAvailable) localStorage.setItem('flappy_rocket_online_leaderboard', dataStr);
+      else memoryStorage.flappy_rocket_online_leaderboard = dataStr;
+    } catch(e) {}
+  }
+  function submitOnlineScore(score) {
+    onlineLeaderboard.push({ name:'Vous', score });
+    onlineLeaderboard.sort((a,b) => b.score - a.score);
+    onlineLeaderboard = onlineLeaderboard.slice(0,10);
+    saveOnlineLeaderboard();
+  }
+
+  // ==================== ÉTAT DU JEU ====================
+  let screen = 'menu';
+  let bird = {};
+  let pipes = [];
+  let coins = [];
+  let powerUps = [];
+  let particles = [];
+  let score = 0;
+  let coinsCollected = 0;
+  let pipesPassed = 0;
+  let combo = 0;
+  let maxCombo = 0;
+  let state = 'ready';
+  let lastTime = 0;
+  let pipeTimer = 0;
+  let coinTimer = 0;
+  let powerUpTimer = 0;
+  let currentLevelIndex = 0;
+  let activePowerUps = { shield:false, slowMo:0, doubleScore:0, magnet:0, star:false, laser:false };
+  let invincible = false;
+  let invincibleTimer = 0;
+  let scoreMultiplier = 1;
+  let gameTime = 0;
+  let buttons = [];
+  let dailyChallengeScore = 0;
+
+  const LEVELS = [
+    { name:'Facile', name_en:'Easy', pipeSpeed:160, pipeGap:200, pipeSpacing:280, gravity:1300, movingPipes:false, coinFrequency:0.25, powerUpFrequency:0.08 },
+    { name:'Moyen', name_en:'Medium', pipeSpeed:200, pipeGap:180, pipeSpacing:250, gravity:1450, movingPipes:false, coinFrequency:0.3, powerUpFrequency:0.1 },
+    { name:'Difficile', name_en:'Hard', pipeSpeed:240, pipeGap:160, pipeSpacing:220, gravity:1550, movingPipes:true, coinFrequency:0.35, powerUpFrequency:0.12 },
+    { name:'Expert', name_en:'Expert', pipeSpeed:280, pipeGap:140, pipeSpacing:190, gravity:1650, movingPipes:true, coinFrequency:0.4, powerUpFrequency:0.14 },
+    { name:'Extrême', name_en:'Extreme', pipeSpeed:320, pipeGap:120, pipeSpacing:160, gravity:1750, movingPipes:true, coinFrequency:0.45, powerUpFrequency:0.16 }
+  ];
+  function getCurrentLevel(score) { return Math.min(Math.floor(score / 10), LEVELS.length - 1); }
+  function getLevelParams(levelIndex) { return LEVELS[levelIndex]; }
+  function getLevelName(level) { return lang === 'fr' ? level.name : level.name_en; }
+
+  // ==================== RÉINITIALISATION ====================
+  function resetGame() {
+    bird = { x:W*BIRD_X_RATIO, y:H*0.5, vy:0, angle:0, wingPhase:0 };
+    pipes = []; coins = []; powerUps = []; particles = [];
+    score = 0; coinsCollected = 0; pipesPassed = 0; combo = 0; maxCombo = 0;
+    state = 'ready'; pipeTimer = 0; coinTimer = 0; powerUpTimer = 0; currentLevelIndex = 0;
+    activePowerUps = { shield:false, slowMo:0, doubleScore:0, magnet:0, star:false, laser:false };
+    invincible = false; invincibleTimer = 0; scoreMultiplier = 1; gameTime = 0;
+    dailyChallengeScore = getDailyChallenge();
+  }
+
+  function startGame() {
+    initAudio();
+    resetGame();
+    screen = 'playing';
+    state = 'ready';
+    startBackgroundMusic();
+  }
+
+  function pauseGame() {
+    if (screen === 'playing' && state === 'playing') {
+      screen = 'paused';
+      stopBackgroundMusic();
+    }
+  }
+  function resumeGame() {
+    if (screen === 'paused') {
+      screen = 'playing';
+      startBackgroundMusic();
+    }
+  }
+  function quitToMenu() {
+    stopBackgroundMusic();
+    screen = 'menu';
+    scrollOffset = 0;
+  }
+
+  function gameOver() {
+    if (state === 'over') return;
+    state = 'over';
+    stopBackgroundMusic();
+    soundGameOver();
+    vibrate([100,50,100]);
+    const skin = getSelectedSkin();
+    for (let i=0; i<40; i++) addParticle(bird.x, bird.y, (Math.random()-0.5)*500, (Math.random()-0.5)*500, 0.6+Math.random()*0.8, skin.color, 2+Math.random()*8, 300);
+    gameData.totalGames++;
+    gameData.totalPipesPassed += pipesPassed;
+    gameData.totalCoinsCollected += coinsCollected;
+    if (score > gameData.bestScore) gameData.bestScore = score;
+    gameData.coins += coinsCollected;
+    checkMissionProgress('pipes', pipesPassed);
+    checkMissionProgress('coins', coinsCollected);
+    checkMissionProgress('score', score);
+    checkMissionProgress('games', 1);
+    checkDailyChallenge();
+    checkAchievements();
+    submitOnlineScore(score);
+    saveGameData();
+    screen = 'gameover';
+  }
+
+  function flap() {
+    initAudio();
+    if (state === 'ready') {
+      state = 'playing';
+      bird.vy = getLevelParams(currentLevelIndex).gravity * -0.22;
+      soundJump();
+    } else if (state === 'playing') {
+      bird.vy = getLevelParams(currentLevelIndex).gravity * -0.22;
+      bird.angle = -0.5;
+      soundJump();
+      for (let i=0; i<5; i++) addParticle(bird.x-12, bird.y+12, -80-Math.random()*100, 20+Math.random()*40, 0.3, '#f1c40f', 2+Math.random()*4, 0);
+    }
+  }
+
+  // ==================== SYSTÈME DE PARTICULES ====================
+  function addParticle(x, y, vx, vy, life, color, size, gravity) {
+    let p = null;
+    for (let i=0; i<particles.length; i++) if (particles[i].life <= 0) { p = particles[i]; break; }
+    if (!p) { if (particles.length >= MAX_PARTICLES) return; p = {}; particles.push(p); }
+    p.x = x; p.y = y; p.vx = vx; p.vy = vy; p.life = life; p.maxLife = life; p.color = color; p.size = size; p.gravity = gravity;
+  }
+
+  // ==================== OBJETS ====================
+  function spawnPipe() {
+    const params = getLevelParams(currentLevelIndex);
+    const minGapY = params.pipeGap/2 + 30;
+    const maxGapY = H - GROUND_HEIGHT - params.pipeGap/2 - 30;
+    if (maxGapY <= minGapY) return;
+    const gapY = Math.random()*(maxGapY-minGapY)+minGapY;
+    const isMoving = params.movingPipes && Math.random() > 0.4;
+    pipes.push({ x:W+60, gapY, originalGapY:gapY, scored:false, moving:isMoving, moveSpeed:isMoving?40+Math.random()*60:0, moveRange:30+Math.random()*40, movePhase:Math.random()*Math.PI*2 });
+  }
+  function spawnCoins() {
+    const y = H*0.3 + Math.random()*(H*0.4);
+    coins.push({ x:W+100, y, collected:false, angle:0, magnetized:false, bobPhase:Math.random()*Math.PI*2 });
+  }
+  function spawnPowerUp() {
+    const types = ['shield','slowMo','doubleScore','magnet','star','laser'];
+    const type = types[Math.floor(Math.random()*types.length)];
+    const y = H*0.25 + Math.random()*(H*0.5);
+    powerUps.push({ x:W+80, y, type, collected:false, angle:0, bobPhase:Math.random()*Math.PI*2 });
+  }
+
+  // ==================== COLLISIONS ====================
+  function circleRectCollision(cx,cy,r,rect) {
+    const closestX = Math.max(rect.x, Math.min(cx, rect.x+rect.w));
+    const closestY = Math.max(rect.y, Math.min(cy, rect.y+rect.h));
+    const dx = cx-closestX; const dy = cy-closestY;
+    return (dx*dx+dy*dy) < (r*r);
+  }
+  function collidesWithPipe(bird, pipe) {
+    const params = getLevelParams(currentLevelIndex);
+    const topH = pipe.gapY - params.pipeGap/2;
+    const topRect = { x:pipe.x, y:0, w:PIPE_WIDTH, h:topH };
+    const bottomY = pipe.gapY + params.pipeGap/2;
+    const bottomRect = { x:pipe.x, y:bottomY, w:PIPE_WIDTH, h:H-GROUND_HEIGHT-bottomY };
+    return circleRectCollision(bird.x,bird.y,BIRD_RADIUS,topRect) || circleRectCollision(bird.x,bird.y,BIRD_RADIUS,bottomRect);
+  }
+
+  function collectCoin(coin) {
+    if (coin.collected) return;
+    coin.collected = true;
+    coinsCollected++; combo++;
+    if (combo > maxCombo) maxCombo = combo;
+    score += 1 * scoreMultiplier;
+    soundCoin(); vibrate(30);
+    for (let i=0; i<12; i++) addParticle(coin.x, coin.y, (Math.random()-0.5)*250, (Math.random()-0.5)*250, 0.4, '#f1c40f', 2+Math.random()*4, 200);
+    if (activePowerUps.magnet > 0 || activePowerUps.star) {
+      for (const c of coins) if (!c.collected && Math.abs(c.x-coin.x)<200 && Math.abs(c.y-coin.y)<200) c.magnetized = true;
+    }
+  }
+
+  function activatePowerUp(powerUp) {
+    powerUp.collected = true;
+    soundPowerUp(); vibrate(50);
+    switch (powerUp.type) {
+      case 'shield': activePowerUps.shield = true; invincible = true; invincibleTimer = 3; soundShieldActivate(); break;
+      case 'slowMo': activePowerUps.slowMo = 5; break;
+      case 'doubleScore': activePowerUps.doubleScore = 5; break;
+      case 'magnet': activePowerUps.magnet = 5; break;
+      case 'star': activePowerUps.star = true; invincible = true; activePowerUps.magnet = 5; activePowerUps.doubleScore = 3; invincibleTimer = 5; break;
+      case 'laser':
+        soundLaser();
+        for (const p of pipes) for (let i=0; i<10; i++) addParticle(p.x+PIPE_WIDTH/2, p.gapY, (Math.random()-0.5)*300, (Math.random()-0.5)*300, 0.5, '#95a5a6', 3+Math.random()*5, 300);
+        pipes = [];
+        break;
+    }
+    for (let i=0; i<20; i++) addParticle(powerUp.x, powerUp.y, (Math.random()-0.5)*300, (Math.random()-0.5)*300, 0.5, powerUp.type==='star'?'#f1c40f':'#9b59b6', 2+Math.random()*5, 200);
+  }
+
+  // ==================== UPDATE ====================
+  function update(dt) {
+    if (screen !== 'playing' || state !== 'playing') return;
+    gameTime += dt;
+    const params = getLevelParams(currentLevelIndex);
+    scoreMultiplier = activePowerUps.doubleScore > 0 ? 2 : (activePowerUps.star ? 2 : 1);
+    bird.vy += params.gravity * dt;
+    bird.y += bird.vy * dt;
+    if (bird.vy > 0) bird.angle = Math.min(0.8, bird.angle + 0.08);
+    else bird.angle = Math.max(-0.5, bird.angle - 0.06);
+
+    const groundY = H - GROUND_HEIGHT - BIRD_RADIUS;
+    if (bird.y >= groundY) {
+      bird.y = groundY;
+      if (!invincible) { gameOver(); return; }
+      else { bird.vy = 0; invincible = false; activePowerUps.shield = false; activePowerUps.star = false; invincibleTimer = 0; soundExplosion(); vibrate(100); }
+    }
+    if (bird.y < BIRD_RADIUS) { bird.y = BIRD_RADIUS; bird.vy = 0; }
+
+    pipeTimer += dt;
+    if (pipeTimer >= params.pipeSpacing / params.pipeSpeed) { pipeTimer = 0; spawnPipe(); }
+    coinTimer += dt;
+    if (coinTimer >= 2.0 / params.coinFrequency) { coinTimer = 0; if (Math.random() < params.coinFrequency) spawnCoins(); }
+    powerUpTimer += dt;
+    if (powerUpTimer >= 6.0 / params.powerUpFrequency) { powerUpTimer = 0; if (Math.random() < params.powerUpFrequency) spawnPowerUp(); }
+
+    if (activePowerUps.slowMo > 0) activePowerUps.slowMo -= dt;
+    if (activePowerUps.doubleScore > 0) activePowerUps.doubleScore -= dt;
+    if (activePowerUps.magnet > 0) activePowerUps.magnet -= dt;
+    if (activePowerUps.star && invincibleTimer <= 0) activePowerUps.star = false;
+    if (invincibleTimer > 0) {
+      invincibleTimer -= dt;
+      if (invincibleTimer <= 0) { invincible = false; activePowerUps.shield = false; activePowerUps.star = false; }
+    }
+
+    for (let i=pipes.length-1; i>=0; i--) {
+      const p = pipes[i];
+      p.x -= params.pipeSpeed * dt;
+      if (p.moving) { p.movePhase += dt*2; p.gapY = p.originalGapY + Math.sin(p.movePhase)*p.moveRange; }
+      if (!p.scored && p.x + PIPE_WIDTH < bird.x - BIRD_RADIUS) {
+        p.scored = true; pipesPassed++; score += 1 * scoreMultiplier;
+        const newLevel = getCurrentLevel(score);
+        if (newLevel !== currentLevelIndex) currentLevelIndex = newLevel;
+      }
+      if (collidesWithPipe(bird, p)) {
+        if (!invincible) { gameOver(); return; }
+        else { invincible = false; activePowerUps.shield = false; activePowerUps.star = false; invincibleTimer = 0; soundExplosion(); vibrate(100); pipes.splice(i,1); continue; }
+      }
+      if (p.x + PIPE_WIDTH < -50) pipes.splice(i,1);
+    }
+
+    for (let i=coins.length-1; i>=0; i--) {
+      const c = coins[i];
+      c.x -= params.pipeSpeed * dt;
+      c.angle += dt*5;
+      c.bobPhase += dt*3;
+      if (activePowerUps.magnet > 0 && !c.collected) {
+        const dx = bird.x - c.x; const dy = bird.y - c.y; const dist = Math.sqrt(dx*dx+dy*dy);
+        if (dist < 200) { c.x += dx*5*dt; c.y += dy*5*dt; c.magnetized = true; }
+      }
+      if (c.magnetized && !c.collected) {
+        const dx = bird.x - c.x; const dy = bird.y - c.y; const dist = Math.sqrt(dx*dx+dy*dy);
+        if (dist < 120) { c.x += dx*10*dt; c.y += dy*10*dt; }
+      }
+      if (!c.collected && Math.abs(c.x-bird.x) < BIRD_RADIUS+COIN_RADIUS && Math.abs(c.y-bird.y) < BIRD_RADIUS+COIN_RADIUS) {
+        collectCoin(c); coins.splice(i,1);
+      } else if (c.x < -50) coins.splice(i,1);
+    }
+
+    for (let i=powerUps.length-1; i>=0; i--) {
+      const pu = powerUps[i];
+      pu.x -= params.pipeSpeed * dt;
+      pu.angle += dt*3;
+      pu.bobPhase += dt*2;
+      if (!pu.collected && Math.abs(pu.x-bird.x) < BIRD_RADIUS+POWERUP_RADIUS && Math.abs(pu.y-bird.y) < BIRD_RADIUS+POWERUP_RADIUS) {
+        activatePowerUp(pu); powerUps.splice(i,1);
+      } else if (pu.x < -50) powerUps.splice(i,1);
+    }
+
+    if (Math.random() < 0.8) {
+      const skin = getSelectedSkin();
+      addParticle(bird.x-18, bird.y+12+Math.random()*4, -100-Math.random()*120, 10+Math.random()*30, 0.3, skin.trailColor, 2+Math.random()*4, 0);
+    }
+    for (let i=particles.length-1; i>=0; i--) {
+      const p = particles[i];
+      if (p.life <= 0) continue;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.gravity) p.vy += p.gravity * dt;
+      p.life -= dt;
+      if (p.life <= 0) p.life = 0;
+    }
+    updateEventParticles(dt);
+  }
+
+  // ==================== PARTICULES D'ÉVÉNEMENT ====================
+  let eventParticles = [];
+  function spawnEventParticles() {
+    const event = getActiveEvent();
+    if (!event || !event.particleType || eventParticles.length >= MAX_EVENT_PARTICLES) return;
+    const type = event.particleType;
+    switch(type) {
+      case 'snow': eventParticles.push({ x:Math.random()*W, y:-10, vx:(Math.random()-0.5)*30, vy:30+Math.random()*40, size:3+Math.random()*5, type, color:'#ffffff', life:10, maxLife:10 }); break;
+      case 'bat': eventParticles.push({ x:Math.random()*W, y:Math.random()*H*0.5, vx:-30-Math.random()*30, vy:(Math.random()-0.5)*20, size:8+Math.random()*5, type, color:'#2c3e50', life:15, maxLife:15 }); break;
+      case 'egg': const colors=['#ff69b4','#ffff00','#00ff00','#ff0000','#800080','#ffa500']; eventParticles.push({ x:Math.random()*W, y:-10, vx:(Math.random()-0.5)*20, vy:40+Math.random()*30, size:6+Math.random()*6, type, color:colors[Math.floor(Math.random()*colors.length)], life:8, maxLife:8, angle:Math.random()*Math.PI*2, rotationSpeed:(Math.random()-0.5)*2 }); break;
+      case 'firework': eventParticles.push({ x:Math.random()*W, y:H+10, vx:(Math.random()-0.5)*10, vy:-200-Math.random()*100, size:2+Math.random()*3, type, color:'#f1c40f', life:1.5, maxLife:1.5 }); break;
+      case 'heart': eventParticles.push({ x:Math.random()*W, y:H+10, vx:(Math.random()-0.5)*20, vy:-30-Math.random()*20, size:8+Math.random()*8, type, color:'#ff1493', life:10, maxLife:10 }); break;
+      case 'candy': eventParticles.push({ x:Math.random()*W, y:-10, vx:(Math.random()-0.5)*30, vy:40+Math.random()*50, size:5+Math.random()*5, type, color:['#ff69b4','#ff1493','#ffa500','#ffff00'][Math.floor(Math.random()*4)], life:8, maxLife:8, angle:Math.random()*Math.PI*2, rotationSpeed:(Math.random()-0.5)*4 }); break;
+      case 'chocolate': eventParticles.push({ x:Math.random()*W, y:-10, vx:(Math.random()-0.5)*20, vy:30+Math.random()*30, size:4+Math.random()*6, type, color:'#5c3317', life:7, maxLife:7 }); break;
+    }
+  }
+  function updateEventParticles(dt) {
+    if (isEventActive()) { if (Math.random() < dt*2) spawnEventParticles(); }
+    else { if (eventParticles.length) eventParticles = eventParticles.filter(p => p.life > 0); return; }
+    for (let i=eventParticles.length-1; i>=0; i--) {
+      const p = eventParticles[i];
+      p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+      if (p.angle !== undefined) p.angle += p.rotationSpeed * dt;
+      if (p.life <= 0 || p.y > H+50 || p.x < -50 || p.x > W+50) eventParticles.splice(i,1);
+    }
+  }
+  function drawEventParticles() {
+    for (const p of eventParticles) {
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      switch(p.type) {
+        case 'snow': ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill(); break;
+        case 'bat': ctx.fillStyle=p.color; ctx.save(); ctx.translate(p.x,p.y); ctx.beginPath(); ctx.moveTo(-p.size,0); ctx.lineTo(0,-p.size*0.8); ctx.lineTo(p.size,0); ctx.lineTo(0,p.size*0.8); ctx.closePath(); ctx.fill(); ctx.restore(); break;
+        case 'egg': ctx.fillStyle=p.color; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle); ctx.beginPath(); ctx.ellipse(0,0,p.size,p.size*1.3,0,0,Math.PI*2); ctx.fill(); ctx.restore(); break;
+        case 'firework': ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(p.x+2,p.y-2,1,0,Math.PI*2); ctx.fill(); break;
+        case 'heart': ctx.fillStyle=p.color; ctx.save(); ctx.translate(p.x,p.y); ctx.beginPath(); ctx.moveTo(0,p.size*0.4); ctx.bezierCurveTo(-p.size,-p.size*0.4,-p.size*0.5,-p.size,0,-p.size*0.5); ctx.bezierCurveTo(p.size*0.5,-p.size,p.size,-p.size*0.4,0,p.size*0.4); ctx.fill(); ctx.restore(); break;
+        case 'candy': ctx.fillStyle=p.color; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle); ctx.fillRect(-p.size/2,-p.size/4,p.size,p.size/2); ctx.fillStyle='#fff'; ctx.fillRect(-p.size/2,-p.size/2,p.size/3,p.size); ctx.restore(); break;
+        case 'chocolate': ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill(); break;
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ==================== DESSIN ====================
+  function drawBackground() {
+    const theme = getCurrentTheme();
+    ctx.fillStyle = skyGradient || theme.skyTop;
+    ctx.fillRect(0,0,W,H);
+    if (cloudTexture) {
+      const cloudOffset = (Date.now() * 0.01) % (W + 300) - 150;
+      ctx.drawImage(cloudTexture, cloudOffset, 50);
+      ctx.drawImage(cloudTexture, cloudOffset + 400, 150);
+      ctx.drawImage(cloudTexture, cloudOffset + 800, 100);
+    }
+    ctx.fillStyle = theme.hillColor;
+    ctx.beginPath();
+    ctx.moveTo(0, H - GROUND_HEIGHT);
+    ctx.quadraticCurveTo(W*0.2, H - GROUND_HEIGHT - 60, W*0.5, H - GROUND_HEIGHT);
+    ctx.quadraticCurveTo(W*0.8, H - GROUND_HEIGHT - 40, W, H - GROUND_HEIGHT);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    ctx.beginPath();
+    ctx.moveTo(0, H - GROUND_HEIGHT);
+    ctx.quadraticCurveTo(W*0.3, H - GROUND_HEIGHT - 30, W*0.6, H - GROUND_HEIGHT);
+    ctx.quadraticCurveTo(W*0.9, H - GROUND_HEIGHT - 20, W, H - GROUND_HEIGHT);
+    ctx.fill();
+    drawEventParticles();
+  }
+
+  function drawGround() {
+    ctx.fillStyle = groundGradient;
+    ctx.fillRect(0, H - GROUND_HEIGHT, W, GROUND_HEIGHT);
+    ctx.fillStyle = getCurrentTheme().hillColor;
+    ctx.fillRect(0, H - GROUND_HEIGHT, W, 8);
+    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 20) {
+      ctx.beginPath();
+      ctx.moveTo(x, H - GROUND_HEIGHT);
+      ctx.lineTo(x - 6, H - GROUND_HEIGHT + 10);
+      ctx.lineTo(x + 6, H - GROUND_HEIGHT + 10);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+
+  function drawPipe(pipe, params) {
+    const topH = pipe.gapY - params.pipeGap/2;
+    const bottomY = pipe.gapY + params.pipeGap/2;
+    const bottomH = H - GROUND_HEIGHT - bottomY;
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(pipe.x+5, 0, PIPE_WIDTH, topH);
+    ctx.fillRect(pipe.x+5, bottomY, PIPE_WIDTH, bottomH);
+    ctx.fillStyle = pipeGradient;
+    ctx.fillRect(pipe.x, 0, PIPE_WIDTH, topH);
+    ctx.fillRect(pipe.x, bottomY, PIPE_WIDTH, bottomH);
+    ctx.fillStyle = pipeGradientDark;
+    ctx.fillRect(pipe.x-5, topH-20, PIPE_WIDTH+10, 20);
+    ctx.fillRect(pipe.x-5, bottomY, PIPE_WIDTH+10, 20);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillRect(pipe.x+10, 0, 8, topH);
+    ctx.fillRect(pipe.x+10, bottomY, 8, bottomH);
+  }
+
+  function drawBird() {
+    const skin = getSelectedSkin();
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    ctx.rotate(bird.angle || 0);
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = skin.color;
+    ctx.beginPath();
+    ctx.moveTo(22, 0);
+    ctx.quadraticCurveTo(15, -15, -5, -14);
+    ctx.lineTo(-20, -10);
+    ctx.lineTo(-20, 10);
+    ctx.lineTo(-5, 14);
+    ctx.quadraticCurveTo(15, 15, 22, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(2, 0, 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#3498db';
+    ctx.beginPath(); ctx.arc(1, -1, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.beginPath(); ctx.arc(0, -2, 2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#f39c12';
+    ctx.beginPath(); ctx.moveTo(-5, -12); ctx.lineTo(-18, -28); ctx.lineTo(-12, -7); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-5, 12); ctx.lineTo(-18, 28); ctx.lineTo(-12, 7); ctx.closePath(); ctx.fill();
+    if (state === 'playing' || state === 'ready') {
+      const flicker = Math.random() * 12;
+      ctx.fillStyle = '#e67e22';
+      ctx.beginPath(); ctx.moveTo(-20, -6); ctx.lineTo(-35 - flicker, 0); ctx.lineTo(-20, 6); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath(); ctx.moveTo(-18, -3); ctx.lineTo(-30 - flicker, 0); ctx.lineTo(-18, 3); ctx.closePath(); ctx.fill();
+    }
+    if (invincible) {
+      ctx.strokeStyle = activePowerUps.star ? 'rgba(241,196,15,0.8)' : 'rgba(155,89,182,0.8)';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(0,0, BIRD_RADIUS+10, 0, Math.PI*2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawCoins() {
+    for (const c of coins) {
+      if (c.collected) continue;
+      const bobY = Math.sin(c.bobPhase) * 5;
+      ctx.save();
+      ctx.translate(c.x, c.y + bobY);
+      ctx.rotate(c.angle);
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.beginPath(); ctx.ellipse(2,4,COIN_RADIUS,COIN_RADIUS*0.5,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath(); ctx.ellipse(0,0,COIN_RADIUS,COIN_RADIUS*0.7,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#f39c12';
+      ctx.beginPath(); ctx.ellipse(0,-2,COIN_RADIUS*0.7,COIN_RADIUS*0.4,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('$', 0, 0);
+      ctx.restore();
+    }
+  }
+
+  function drawPowerUps() {
+    for (const pu of powerUps) {
+      if (pu.collected) continue;
+      const bobY = Math.sin(pu.bobPhase) * 8;
+      ctx.save();
+      ctx.translate(pu.x, pu.y + bobY);
+      ctx.rotate(pu.angle);
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.beginPath(); ctx.ellipse(3,5,POWERUP_RADIUS,POWERUP_RADIUS*0.5,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = pu.type === 'star' ? '#f1c40f' : (pu.type === 'laser' ? '#e74c3c' : '#9b59b6');
+      ctx.beginPath(); ctx.arc(0,0,POWERUP_RADIUS,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const icon = pu.type === 'shield' ? '🛡' : pu.type === 'slowMo' ? '⏱' : pu.type === 'doubleScore' ? 'x2' : pu.type === 'magnet' ? '🧲' : pu.type === 'star' ? '⭐' : '🔫';
+      ctx.fillText(icon, 0, 0);
+      ctx.restore();
+    }
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      if (p.life <= 0) continue;
+      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawUI() {
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 30px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 5;
+    ctx.fillText(score, W/2, 50);
+    ctx.shadowBlur = 0;
+    ctx.font = '14px sans-serif';
+    ctx.fillText(t('level') + getLevelName(LEVELS[currentLevelIndex]), W/2, 75);
+    ctx.font = '16px sans-serif';
+    ctx.fillText(t('coins') + coinsCollected, W - 50, 40);
+    if (combo > 1) { ctx.font = 'bold 20px sans-serif'; ctx.fillText(t('combo') + combo, W/2, 105); }
+    let yPos = 125;
+    if (activePowerUps.shield) { ctx.fillText('🛡️', W - 40, yPos); yPos += 25; }
+    if (activePowerUps.slowMo > 0) { ctx.fillText('⏱️ ' + Math.ceil(activePowerUps.slowMo), W - 40, yPos); yPos += 25; }
+    if (activePowerUps.doubleScore > 0) { ctx.fillText('x2 ' + Math.ceil(activePowerUps.doubleScore), W - 40, yPos); yPos += 25; }
+    if (activePowerUps.magnet > 0) { ctx.fillText('🧲 ' + Math.ceil(activePowerUps.magnet), W - 40, yPos); yPos += 25; }
+    if (activePowerUps.star) { ctx.fillText('⭐ ' + Math.ceil(invincibleTimer), W - 40, yPos); yPos += 25; }
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(W - 50, H - GROUND_HEIGHT - 55, 40, 30);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillText('⏸', W - 30, H - GROUND_HEIGHT - 35);
+    buttons.push({ x: W - 50, y: H - GROUND_HEIGHT - 55, w: 40, h: 30, action: pauseGame });
+  }
+
+  function drawReadyScreen() {
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 5;
+    ctx.fillText(t('touchToStart'), W/2, H/2 - 20);
+    ctx.font = '18px sans-serif';
+    ctx.fillText(t('level') + getLevelName(LEVELS[currentLevelIndex]), W/2, H/2 + 20);
+    ctx.fillText(t('dailyChallenge') + dailyChallengeScore, W/2, H/2 + 60);
+    ctx.shadowBlur = 0;
+  }
+
+  function drawGameOverScreen() {
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 32px sans-serif';
+    ctx.fillText(t('gameOver'), W/2, H/2 - 100);
+    ctx.font = '22px sans-serif';
+    ctx.fillText(t('score') + score, W/2, H/2 - 60);
+    ctx.fillText(t('coins') + coinsCollected, W/2, H/2 - 35);
+    ctx.fillText(t('pipesPassed') + pipesPassed, W/2, H/2 - 10);
+    ctx.fillText(t('record') + gameData.bestScore, W/2, H/2 + 15);
+    ctx.font = '18px sans-serif';
+    ctx.fillText(t('touchToReplay'), W/2, H/2 + 60);
+    drawButton(t('replay'), W/2, H/2 + 100, 150, 40, startGame);
+    drawButton(t('menu'), W/2, H/2 + 160, 150, 40, quitToMenu);
+  }
+
+  // ==================== MENUS DÉFILANTS ====================
+  function drawMenu() {
+    drawBackground();
+    drawGround();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 48px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 8;
+    ctx.fillText(t('title'), W/2, 120 - scrollOffset);
+    ctx.shadowBlur = 0;
+    ctx.font = '20px sans-serif';
+    ctx.fillText(t('coins') + gameData.coins, W - 80, 40 - scrollOffset);
+    const menuButtons = [
+      { label: t('play'), action: startGame },
+      { label: t('shop'), action: () => { screen='shop'; soundButtonClick(); scrollOffset=0; } },
+      { label: t('themes'), action: () => { screen='themes'; soundButtonClick(); scrollOffset=0; } },
+      { label: t('events'), action: () => { screen='events'; soundButtonClick(); scrollOffset=0; } },
+      { label: t('missions'), action: () => { screen='missions'; soundButtonClick(); scrollOffset=0; } },
+      { label: t('achievements'), action: () => { screen='achievements'; soundButtonClick(); scrollOffset=0; } },
+      { label: t('settings'), action: () => { screen='settings'; soundButtonClick(); scrollOffset=0; } }
+    ];
+    let yBase = H/2 - 60;
+    menuButtons.forEach((btn, i) => {
+      const y = yBase + i * 70 - scrollOffset;
+      drawButton(btn.label, W/2, y, 180, 50, btn.action);
+    });
+    ctx.font = '18px sans-serif';
+    ctx.fillText(t('record') + gameData.bestScore, W/2, yBase + menuButtons.length * 70 + 20 - scrollOffset);
+    ctx.fillText(t('dailyChallenge') + dailyChallengeScore, W/2, yBase + menuButtons.length * 70 + 50 - scrollOffset);
+    if (!storageAvailable) {
+      ctx.fillStyle = 'yellow';
+      ctx.font = '12px sans-serif';
+      ctx.fillText(t('storageUnavailable'), W/2, H - 20);
+    }
+    const activeEvent = getActiveEvent();
+    if (activeEvent) {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText(t('activeEvent') + getEventName(activeEvent), W/2, 160 - scrollOffset);
+    }
+  }
+
+  function drawShop() {
+    ctx.fillStyle = '#70c5ce';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(t('shopTitle'), W/2, 80 - scrollOffset);
+    ctx.font = '20px sans-serif';
+    ctx.fillText(t('coins') + gameData.coins, W/2, 120 - scrollOffset);
+    let yOffset = 180 - scrollOffset;
+    for (let i=0; i<SKINS.length; i++) {
+      const skin = SKINS[i];
+      const y = yOffset;
+      yOffset += 70;
+      ctx.fillStyle = i===gameData.selectedSkin ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)';
+      ctx.fillRect(W/2-150, y-25, 300, 50);
+      ctx.fillStyle = skin.color;
+      ctx.beginPath(); ctx.moveTo(W/2-120, y-10); ctx.lineTo(W/2-90, y-20); ctx.lineTo(W/2-60, y-10); ctx.lineTo(W/2-90, y+15); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '18px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(getSkinName(skin), W/2-40, y-5);
+      if (isSkinUnlocked(i)) ctx.fillText(t('unlocked'), W/2-40, y+20);
+      else ctx.fillText(t('price') + skin.price + ' 🪙', W/2-40, y+20);
+    }
+    const eventSkins = getEventSkinsForActiveEvent();
+    for (const es of eventSkins) {
+      const y = yOffset;
+      yOffset += 70;
+      ctx.fillStyle = 'rgba(255,215,0,0.2)';
+      ctx.fillRect(W/2-150, y-25, 300, 50);
+      ctx.fillStyle = es.color;
+      ctx.beginPath(); ctx.moveTo(W/2-120, y-10); ctx.lineTo(W/2-90, y-20); ctx.lineTo(W/2-60, y-10); ctx.lineTo(W/2-90, y+15); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '18px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(getSkinName(es) + t('eventSkinsSuffix'), W/2-40, y-5);
+      const alreadyOwned = gameData.purchasedEventSkins.some(s => s.name === es.name);
+      if (alreadyOwned) ctx.fillText(t('unlocked'), W/2-40, y+20);
+      else ctx.fillText(t('price') + es.price + ' 🪙', W/2-40, y+20);
+    }
+    drawButton(t('back'), W/2, H-80, 120, 40, () => { screen='menu'; soundButtonClick(); scrollOffset=0; });
+  }
+
+  function drawThemes() {
+    ctx.fillStyle = '#70c5ce';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(t('themesTitle'), W/2, 80 - scrollOffset);
+    ctx.font = '20px sans-serif';
+    ctx.fillText(t('coins') + gameData.coins, W/2, 120 - scrollOffset);
+    const themeIds = Object.keys(THEMES);
+    let yOffset = 180 - scrollOffset;
+    for (let i=0; i<themeIds.length; i++) {
+      const themeId = themeIds[i];
+      const theme = THEMES[themeId];
+      const y = yOffset;
+      yOffset += 70;
+      ctx.fillStyle = themeId===gameData.selectedTheme ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)';
+      ctx.fillRect(W/2-150, y-25, 300, 50);
+      const grad = ctx.createLinearGradient(W/2-130,0,W/2-50,0);
+      grad.addColorStop(0, theme.skyTop); grad.addColorStop(1, theme.skyBottom);
+      ctx.fillStyle = grad;
+      ctx.fillRect(W/2-130, y-20, 80, 40);
+      ctx.fillStyle = '#fff';
+      ctx.font = '18px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(getThemeName(theme), W/2-30, y-5);
+      if (isThemeUnlocked(themeId)) ctx.fillText(t('unlocked'), W/2-30, y+20);
+      else ctx.fillText(t('price') + theme.price + ' 🪙', W/2-30, y+20);
+    }
+    drawButton(t('back'), W/2, H-80, 120, 40, () => { screen='menu'; soundButtonClick(); scrollOffset=0; });
+  }
+
+  function drawEvents() {
+    ctx.fillStyle = '#70c5ce';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(t('eventsTitle'), W/2, 80 - scrollOffset);
+    ctx.font = '20px sans-serif';
+    ctx.fillText(t('coins') + gameData.coins, W/2, 120 - scrollOffset);
+    let yOffset = 180 - scrollOffset;
+    for (let i=0; i<EVENTS.length; i++) {
+      const ev = EVENTS[i];
+      const y = yOffset;
+      yOffset += 90;
+      const active = isEventActive() && gameData.activeEvent.id === ev.id;
+      ctx.fillStyle = active ? 'rgba(0,255,0,0.2)' : 'rgba(0,0,0,0.2)';
+      ctx.fillRect(W/2-170, y-30, 340, 80);
+      ctx.fillStyle = '#fff';
+      ctx.font = '18px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(getEventName(ev), W/2-150, y-10);
+      ctx.fillText(getEventDescription(ev), W/2-150, y+10);
+      ctx.fillText(t('eventCost') + ev.cost + ' 🪙', W/2-150, y+30);
+      if (active) {
+        const remaining = Math.ceil((gameData.activeEvent.endTime - Date.now()) / 3600000);
+        ctx.fillText(t('activeEventRemaining') + remaining + t('hours'), W/2+50, y+10);
+      } else {
+        ctx.fillText(t('clickToActivate'), W/2+50, y+10);
+      }
+    }
+    drawButton(t('back'), W/2, H-80, 120, 40, () => { screen='menu'; soundButtonClick(); scrollOffset=0; });
+  }
+
+  function drawMissions() {
+    ctx.fillStyle = '#70c5ce';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(t('missionsTitle'), W/2, 80);
+    ctx.font = '20px sans-serif';
+    ctx.fillText(t('coins') + gameData.coins, W/2, 120);
+    const startY = 180, itemHeight = 60;
+    for (let i=0; i<gameData.missions.length; i++) {
+      const mission = gameData.missions[i];
+      const y = startY + i*itemHeight;
+      ctx.fillStyle = mission.claimed ? 'rgba(0,0,0,0.1)' : (mission.completed ? 'rgba(0,255,0,0.2)' : 'rgba(0,0,0,0.2)');
+      ctx.fillRect(W/2-170, y-20, 340, 50);
+      ctx.fillStyle = '#fff';
+      ctx.font = '16px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(lang === 'fr' ? mission.description : mission.description_en, W/2-150, y);
+      ctx.fillText('Progrès : ' + Math.min(mission.progress, mission.target) + '/' + mission.target, W/2-150, y+20);
+      if (mission.completed && !mission.claimed) {
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillText(t('missionClaim') + mission.reward + t('missionClaimEnd'), W/2+50, y);
+      } else if (mission.claimed) {
+        ctx.fillText(t('missionDone'), W/2+50, y);
+      } else {
+        ctx.fillText(t('missionInProgress'), W/2+50, y);
+      }
+    }
+    drawButton(t('resetMissions'), W/2, H/2+130, 200, 40, resetMissions);
+    drawButton(t('back'), W/2, H-80, 120, 40, () => { screen='menu'; soundButtonClick(); });
+  }
+
+  function drawAchievements() {
+    ctx.fillStyle = '#70c5ce';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(t('achievementsTitle'), W/2, 80);
+    ctx.font = '20px sans-serif';
+    ctx.fillText(t('coins') + gameData.coins, W/2, 120);
+    const keys = Object.keys(ACHIEVEMENTS);
+    const startY = 180, itemHeight = 50;
+    for (let i=0; i<keys.length; i++) {
+      const key = keys[i]; const ach = ACHIEVEMENTS[key]; const y = startY + i*itemHeight;
+      const unlocked = gameData.achievements[key];
+      ctx.fillStyle = unlocked ? 'rgba(255,215,0,0.2)' : 'rgba(0,0,0,0.2)';
+      ctx.fillRect(W/2-170, y-20, 340, 40);
+      ctx.fillStyle = '#fff';
+      ctx.font = '16px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(lang === 'fr' ? ach.name : ach.name_en, W/2-150, y);
+      ctx.fillText((lang === 'fr' ? ach.desc : ach.desc_en) + (unlocked ? ' ('+t('unlocked')+')' : ''), W/2-150, y+15);
+    }
+    drawButton(t('back'), W/2, H-80, 120, 40, () => { screen='menu'; soundButtonClick(); });
+  }
+
+  function drawSettings() {
+    ctx.fillStyle = '#70c5ce';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(t('settingsTitle'), W/2, 80);
+    ctx.font = '22px sans-serif';
+    ctx.fillText(t('sound') + (soundEnabled ? t('on') : t('off')), W/2, 200);
+    drawButton(t('toggle'), W/2, 250, 200, 50, () => { soundEnabled = !soundEnabled; soundButtonClick(); });
+    ctx.fillText(t('vibration') + (vibrationEnabled ? t('on') : t('off')), W/2, 330);
+    drawButton(t('toggle'), W/2, 380, 200, 50, () => { vibrationEnabled = !vibrationEnabled; soundButtonClick(); });
+    ctx.fillText(t('language') + (lang === 'fr' ? 'Français' : 'English'), W/2, 460);
+    drawButton(lang === 'fr' ? 'English' : 'Français', W/2, 510, 200, 50, () => {
+      lang = lang === 'fr' ? 'en' : 'fr';
+      soundButtonClick();
+      // Mettre à jour les textes immédiatement (aucune action supplémentaire nécessaire)
+    });
+    drawButton(t('resetData'), W/2, 580, 200, 50, () => {
+      gameData = { coins:0, bestScore:0, totalGames:0, totalPipesPassed:0, totalCoinsCollected:0, skinsUnlocked:[0], selectedSkin:0, themesUnlocked:['day'], selectedTheme:'day', missions:[], achievements:{}, dailyChallengeDate:null, dailyChallengeScore:0, dailyChallengeCompleted:false, activeEvent:null, purchasedEventSkins:[], lastLoginDate:null, loginStreak:0 };
+      resetMissions(); saveGameData(); rebuildSkins();
+    });
+    drawButton(t('back'), W/2, H-80, 120, 40, () => { screen='menu'; soundButtonClick(); });
+  }
+
+  function drawButton(label, x, y, w, h, action) {
+    const grad = ctx.createLinearGradient(x - w/2, y - h/2, x - w/2, y + h/2);
+    grad.addColorStop(0, '#3498db');
+    grad.addColorStop(1, '#2980b9');
+    ctx.fillStyle = grad;
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetY = 3;
+    ctx.beginPath();
+    ctx.roundRect(x - w/2, y - h/2, w, h, 10);
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y);
+    buttons.push({ x: x - w/2, y: y - h/2, w, h, action });
+  }
+
+  // ==================== NOTIFICATIONS ====================
+  function drawNotifications() {
+    for (let i = achievementNotifications.length - 1; i >= 0; i--) {
+      const notif = achievementNotifications[i];
+      notif.timer -= 0.016;
+      if (notif.timer <= 0) { achievementNotifications.splice(i,1); continue; }
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(W/2 - 150, 20 + i*50, 300, 40);
+      ctx.fillStyle = '#fff';
+      ctx.font = '16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(notif.text, W/2, 45 + i*50);
+    }
+  }
+
+  // ==================== BOUCLE PRINCIPALE ====================
+  function loop(timestamp) {
+    if (!lastTime) lastTime = timestamp;
+    const dt = Math.min((timestamp - lastTime) / 1000, 0.033);
+    lastTime = timestamp;
+
+    buttons = [];
+    updatePrecomputedGradientsIfNeeded();
+    updateEventParticles(dt);
+
+    if (screen === 'menu') {
+      currentScrollableScreen = 'menu';
+      drawMenu();
+    } else if (screen === 'shop') {
+      currentScrollableScreen = 'shop';
+      drawShop();
+    } else if (screen === 'themes') {
+      currentScrollableScreen = 'themes';
+      drawThemes();
+    } else if (screen === 'events') {
+      currentScrollableScreen = 'events';
+      drawEvents();
+    } else if (screen === 'missions') {
+      currentScrollableScreen = null;
+      drawMissions();
+    } else if (screen === 'achievements') {
+      currentScrollableScreen = null;
+      drawAchievements();
+    } else if (screen === 'settings') {
+      currentScrollableScreen = null;
+      drawSettings();
+    } else if (screen === 'playing' || screen === 'paused') {
+      currentScrollableScreen = null;
+      if (screen === 'playing') update(dt);
+      drawBackground();
+      drawGround();
+      const params = getLevelParams(currentLevelIndex);
+      for (const p of pipes) drawPipe(p, params);
+      drawCoins();
+      drawPowerUps();
+      drawBird();
+      drawParticles();
+      if (state === 'ready') drawReadyScreen();
+      drawUI();
+      if (screen === 'paused') {
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0,0,W,H);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 30px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(t('pause'), W/2, H/2 - 20);
+        drawButton(t('resume'), W/2, H/2+30, 150, 40, resumeGame);
+        drawButton(t('menu'), W/2, H/2+90, 150, 40, quitToMenu);
+      }
+    } else if (screen === 'gameover') {
+      currentScrollableScreen = null;
+      drawBackground();
+      drawGround();
+      const params = getLevelParams(currentLevelIndex);
+      for (const p of pipes) drawPipe(p, params);
+      drawCoins();
+      drawPowerUps();
+      drawBird();
+      drawParticles();
+      drawGameOverScreen();
+    }
+    drawNotifications();
+
+    requestAnimationFrame(loop);
+  }
+
+  // ==================== ENTRÉES (avec scroll) ====================
+  function handleTouchStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (currentScrollableScreen) {
+      isScrolling = false;
+      scrollStartY = touch.clientY;
+      lastTouchY = touch.clientY;
+    }
+  }
+
+  function handleTouchMove(e) {
+    e.preventDefault();
+    if (!currentScrollableScreen || !e.touches.length) return;
+    const touch = e.touches[0];
+    const dy = lastTouchY - touch.clientY;
+    lastTouchY = touch.clientY;
+    if (Math.abs(touch.clientY - scrollStartY) > 10 || isScrolling) {
+      isScrolling = true;
+      scrollOffset += dy;
+      clampScroll();
+    }
+  }
+
+  function handleTouchEnd(e) {
+    e.preventDefault();
+    if (currentScrollableScreen && isScrolling) {
+      isScrolling = false;
+      return;
+    }
+    const touch = e.changedTouches[0];
+    processClick(touch.clientX, touch.clientY);
+  }
+
+  function handleMouseDown(e) {
+    if (currentScrollableScreen) {
+      isScrolling = false;
+      scrollStartY = e.clientY;
+      lastTouchY = e.clientY;
+    }
+  }
+
+  function handleMouseMove(e) {
+    if (!currentScrollableScreen) return;
+    if (e.buttons !== 1) return;
+    const dy = lastTouchY - e.clientY;
+    lastTouchY = e.clientY;
+    if (Math.abs(e.clientY - scrollStartY) > 10 || isScrolling) {
+      isScrolling = true;
+      scrollOffset += dy;
+      clampScroll();
+    }
+  }
+
+  function handleMouseUp(e) {
+    if (currentScrollableScreen && isScrolling) {
+      isScrolling = false;
+      return;
+    }
+    processClick(e.clientX, e.clientY);
+  }
+
+  function processClick(x, y) {
+    for (const btn of buttons) {
+      if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+        btn.action();
+        return;
+      }
+    }
+    if (screen === 'playing' && (state === 'ready' || state === 'playing')) flap();
+    else if (screen === 'gameover') startGame();
+    else if (screen === 'shop') {
+      let yOffset = 180 - scrollOffset;
+      for (let i=0; i<SKINS.length; i++) {
+        const y = yOffset; yOffset += 70;
+        if (y >= y-25 && y <= y+25 && x >= W/2-150 && x <= W/2+150) {
+          if (isSkinUnlocked(i)) { gameData.selectedSkin = i; saveGameData(); soundButtonClick(); }
+          else if (gameData.coins >= SKINS[i].price) { gameData.coins -= SKINS[i].price; unlockSkin(i); gameData.selectedSkin = i; saveGameData(); soundCoin(); }
+          return;
+        }
+      }
+      const eventSkins = getEventSkinsForActiveEvent();
+      for (const es of eventSkins) {
+        const y = yOffset; yOffset += 70;
+        if (y >= y-25 && y <= y+25 && x >= W/2-150 && x <= W/2+150) {
+          const alreadyOwned = gameData.purchasedEventSkins.some(s => s.name === es.name);
+          if (alreadyOwned) { const idx = SKINS.findIndex(s => s.name === es.name); if (idx !== -1) { gameData.selectedSkin = idx; saveGameData(); soundButtonClick(); } }
+          else purchaseEventSkin(es);
+          return;
+        }
+      }
+    } else if (screen === 'themes') {
+      const themeIds = Object.keys(THEMES);
+      let yOffset = 180 - scrollOffset;
+      for (let i=0; i<themeIds.length; i++) {
+        const y = yOffset; yOffset += 70;
+        if (y >= y-25 && y <= y+25 && x >= W/2-150 && x <= W/2+150) {
+          const themeId = themeIds[i];
+          if (isThemeUnlocked(themeId)) { gameData.selectedTheme = themeId; saveGameData(); soundButtonClick(); }
+          else if (gameData.coins >= THEMES[themeId].price) { gameData.coins -= THEMES[themeId].price; unlockTheme(themeId); gameData.selectedTheme = themeId; saveGameData(); soundCoin(); }
+          return;
+        }
+      }
+    } else if (screen === 'events') {
+      let yOffset = 180 - scrollOffset;
+      for (let i=0; i<EVENTS.length; i++) {
+        const y = yOffset; yOffset += 90;
+        if (y >= y-30 && y <= y+50 && x >= W/2-170 && x <= W/2+170) {
+          activateEvent(EVENTS[i].id);
+          return;
+        }
+      }
+    } else if (screen === 'missions') {
+      const startY = 180;
+      for (let i=0; i<gameData.missions.length; i++) {
+        const y = startY + i*60;
+        if (y >= y-20 && y <= y+30 && x >= W/2+30 && x <= W/2+170) {
+          claimMission(i);
+          return;
+        }
+      }
+    }
+  }
+
+  canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+  canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+  canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+  canvas.addEventListener('mousedown', handleMouseDown);
+  canvas.addEventListener('mousemove', handleMouseMove);
+  canvas.addEventListener('mouseup', handleMouseUp);
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') {
+      e.preventDefault();
+      if (screen === 'playing') flap();
+      else if (screen === 'menu') startGame();
+      else if (screen === 'gameover') startGame();
+      else if (screen === 'paused') resumeGame();
+    }
+    if (e.code === 'KeyP' && screen === 'playing') pauseGame();
+    if (e.code === 'Escape' && (screen === 'shop' || screen === 'themes' || screen === 'events' || screen === 'missions' || screen === 'achievements' || screen === 'settings')) {
+      screen = 'menu';
+      scrollOffset = 0;
+    }
+  });
+
+  document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+  // ==================== INITIALISATION ====================
+  // Détection de la langue au démarrage
+  lang = detectLanguage();
+  loadGameData();
+  loadOnlineLeaderboard();
+  resize();
+  resetGame();
+  lastTime = 0;
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
